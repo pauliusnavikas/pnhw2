@@ -1,0 +1,799 @@
+{
+	"info": {
+		"_postman_id": "8771c39c-1f91-4cbf-97d9-3db08e9e1ebd",
+		"name": "NordPass-HW",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17895426"
+	},
+	"item": [
+		{
+			"name": "Positive flows",
+			"item": [
+				{
+					"name": "POST request for authentication and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"pm.test(\"Response content type is application/json\", function () {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.include(\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response should contain the required field 'token'\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('object');",
+									"    pm.expect(responseData).to.have.property('token').that.is.a('string');",
+									"});",
+									"",
+									"pm.test(\"Token must be a non-empty string\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('object');",
+									"    pm.expect(responseData.token).to.exist.and.to.be.a('string').and.to.have.lengthOf.above(0, \"Token should not be empty\");",
+									"});",
+									"",
+									"pm.test(\"Request contains required headers\", function () {",
+									"    pm.expect(pm.request.headers.has('Authorization')).to.be.true;",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "veryStrongPassword",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "john@doe.com",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/v1/user/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET request for item list and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Response has required fields\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('array').that.is.not.empty;",
+									"    responseData.forEach(item => {",
+									"        pm.expect(item).to.have.all.keys('items', 'item_count');",
+									"        pm.expect(item.items).to.be.an('array');",
+									"        pm.expect(item.item_count).to.be.a('number');",
+									"    });",
+									"});",
+									"",
+									"",
+									"pm.test(\"Item_count is a non-negative integer\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('array').that.is.not.empty;",
+									"    pm.expect(responseData[0]).to.have.property('item_count').that.is.a('number').and.to.be.at.least(0);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Items is an array that contains strings\", function () {",
+									"    const responseData = pm.response.json();",
+									"",
+									"    pm.expect(responseData).to.be.an('array');",
+									"    responseData.forEach(item => {",
+									"        pm.expect(item.items).to.be.an('array');",
+									"        item.items.forEach(subItem => {",
+									"            pm.expect(subItem).to.be.a('string');",
+									"        });",
+									"    });",
+									"});",
+									"",
+									"var responseData = pm.response.json();",
+									"",
+									"pm.test(\"Store second item's id as a collection variable\", function () {",
+									"    if (responseData[0].items.length > 1) {",
+									"        pm.collectionVariables.set(\"secondItemId\", responseData[0].items[1]);",
+									"    } else {",
+									"        pm.collectionVariables.set(\"secondItemId\", null);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/user/items?limit=3",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"items"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET request for second item, check response and JSON schema",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", function () {",
+									"  var schema = {",
+									"    type: \"array\",",
+									"    items: {",
+									"      type: \"object\",",
+									"      properties: {",
+									"        id: { type: \"string\" },",
+									"        title: { type: \"string\" },",
+									"        tags: {",
+									"          type: \"array\",",
+									"          items: { type: \"string\" }",
+									"        },",
+									"        files: {",
+									"          type: \"array\",",
+									"          items: {",
+									"            type: \"object\",",
+									"            properties: {",
+									"              id: { type: \"string\" },",
+									"              name: { type: \"string\" },",
+									"              size: { type: \"number\" },",
+									"              content_path: { type: \"string\" }",
+									"            },",
+									"            required: [\"id\", \"name\", \"size\", \"content_path\"]",
+									"          }",
+									"        },",
+									"        fields: {",
+									"          type: \"array\",",
+									"          items: {",
+									"            type: \"object\",",
+									"            properties: {",
+									"              id: { type: \"string\" },",
+									"              label: { type: \"string\" },",
+									"              type: { type: \"string\" },",
+									"              value: { type: \"string\" }",
+									"            },",
+									"            required: [\"id\", \"label\", \"type\", \"value\"]",
+									"          }",
+									"        },",
+									"        shares: {",
+									"          type: \"array\",",
+									"          items: {",
+									"            type: \"object\",",
+									"            properties: {",
+									"              user_uuid: { type: \"string\" },",
+									"              email: { type: \"string\", format: \"email\" },",
+									"              status: { type: \"string\" },",
+									"              updated_at: { type: \"string\", format: \"date-time\" }",
+									"            },",
+									"            required: [\"user_uuid\", \"email\", \"status\", \"updated_at\"]",
+									"          }",
+									"        },",
+									"        created_at: { type: \"string\", format: \"date-time\" },",
+									"        updated_at: { type: \"string\", format: \"date-time\" }",
+									"      },",
+									"      required: [\"id\", \"title\", \"tags\", \"files\", \"fields\", \"shares\", \"created_at\", \"updated_at\"]",
+									"    }",
+									"  };",
+									"",
+									"  var response = pm.response.json();",
+									"  pm.expect(tv4.validate(response, schema)).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/user/{{secondItemId}}/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"{{secondItemId}}",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST request for create new item, check response and JSON schema",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(201);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Response is an array with at least one element\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('array').that.is.not.empty;",
+									"});",
+									"",
+									"",
+									"pm.test(\"Validate the schema of the item object\", function () {",
+									"    const responseData = pm.response.json();",
+									"    ",
+									"    pm.expect(responseData).to.be.an('array').that.is.not.empty;",
+									"    ",
+									"    responseData.forEach(item => {",
+									"        pm.expect(item).to.be.an('object');",
+									"        pm.expect(item).to.have.all.keys('id', 'title', 'tags', 'files', 'fields', 'created_at', 'updated_at');",
+									"        ",
+									"        pm.expect(item.id).to.be.a('string');",
+									"        pm.expect(item.title).to.be.a('string');",
+									"        pm.expect(item.tags).to.be.an('array');",
+									"        ",
+									"        item.files.forEach(file => {",
+									"            pm.expect(file).to.be.an('object');",
+									"            pm.expect(file).to.have.all.keys('id', 'name', 'size', 'content_path');",
+									"            pm.expect(file.id).to.be.a('string');",
+									"            pm.expect(file.name).to.be.a('string');",
+									"            pm.expect(file.size).to.be.a('number');",
+									"            pm.expect(file.content_path).to.be.a('string');",
+									"        });",
+									"        ",
+									"        item.fields.forEach(field => {",
+									"            pm.expect(field).to.be.an('object');",
+									"            pm.expect(field).to.have.all.keys('id', 'label', 'type', 'value');",
+									"            pm.expect(field.id).to.be.a('string');",
+									"            pm.expect(field.label).to.be.a('string');",
+									"            pm.expect(field.type).to.be.a('string');",
+									"            pm.expect(field.value).to.be.a('string');",
+									"        });",
+									"        ",
+									"        pm.expect(item.created_at).to.be.a('string');",
+									"        pm.expect(item.updated_at).to.be.a('string');",
+									"    });",
+									"});",
+									"var responseData = pm.response.json();",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"new\",\n  \"title\": \"new\",\n  \"tags\": [\n    \"string\"\n  ],\n  \"files\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"size\": 0,\n      \"content_path\": \"string\"\n    }\n  ],\n  \"fields\": [\n    {\n      \"id\": \"string\",\n      \"label\": \"string\",\n      \"type\": \"string\",\n      \"value\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/user/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"item"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Negative flows",
+			"item": [
+				{
+					"name": "POST invalid request for authentication with empty 'username' field  and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 400\", function () {",
+									"    pm.expect(pm.response.code).to.equal(400);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "veryStrongPassword",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/v1/user/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST invalid request for authentication with empty 'password' field  and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 400\", function () {",
+									"    pm.expect(pm.response.code).to.equal(400);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "john@doe.com",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/v1/user/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"v1",
+								"user",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET unauthorized request for item list and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 401\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(401);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/user/items?limit=3",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"items"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET unauthorized request for second item and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 401\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(401);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/user/{{secondItemId}}/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"{{secondItemId}}",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET access forbidden request for second item and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(403);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/user/{{secondItemId}}/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"{{secondItemId}}",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST unauthorized for create new item and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 401\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(401);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"new\",\n  \"title\": \"new\",\n  \"tags\": [\n    \"string\"\n  ],\n  \"files\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"size\": 0,\n      \"content_path\": \"string\"\n    }\n  ],\n  \"fields\": [\n    {\n      \"id\": \"string\",\n      \"label\": \"string\",\n      \"type\": \"string\",\n      \"value\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/user/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"item"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST access forbiden request for create new item and check response",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.equal(403);",
+									"});",
+									"",
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response schema is valid\", function () {",
+									"    pm.expect(response).to.have.property('error');",
+									"    pm.expect(response.message).to.be.a('string');",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"new\",\n  \"title\": \"new\",\n  \"tags\": [\n    \"string\"\n  ],\n  \"files\": [\n    {\n      \"id\": \"string\",\n      \"name\": \"string\",\n      \"size\": 0,\n      \"content_path\": \"string\"\n    }\n  ],\n  \"fields\": [\n    {\n      \"id\": \"string\",\n      \"label\": \"string\",\n      \"type\": \"string\",\n      \"value\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/user/item",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"user",
+								"item"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "https://virtserver.swaggerhub.com/nord-s/User-API/1.0.0",
+			"type": "default"
+		},
+		{
+			"key": "secondItemId",
+			"value": ""
+		}
+	]
+}
